@@ -11,10 +11,8 @@
 export default {
     name: 'Login',
     props: {
-        changeForm: {
-            type: Function,
+        changeForm: Function,
         },
-    },
 };
 </script>
 

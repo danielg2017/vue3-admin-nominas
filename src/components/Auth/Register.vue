@@ -11,17 +11,23 @@
             <div class="field">
                 <input type="text"
                 placeholder="Correo electronivo"
-                v-model="formData.email" />
+                v-model="formData.email"
+                :class="{ 'error': formError.email }"
+                />
             </div>
             <div class="field">
                 <input type="text"
                 placeholder="Contraseña"
-                v-model="formData.password" />
+                v-model="formData.password"
+                :class="{ 'error': formError.password }"
+                />
             </div>
             <div class="field">
                 <input type="password"
                 placeholder="Repetir contraseña"
-                v-model="formData.repeatPassword" />
+                v-model="formData.repeatPassword"
+                :class="{ 'error': formError.repeatPassword }"
+                />
             </div>
             <button type="submit" class="ui button positive fluid">Registrar</button>
         </form>
@@ -31,23 +37,59 @@
 </template>
 
 <script>
+// import { async } from '@firebase/util';
+import { ref } from 'vue';
+import * as Yup from 'yup';
+
+
 export default {
     name: 'Register',
     props: {
-        changeForm: {
-            type: Function,
-        },
+        changeForm: Function,
     },
     setup () {
-        let formData = {}
-        const onRegister = () => {
-            console.log('Registrando Usuario')
-            console.log(formData)
+        let formData = {};
+        let formError = ref({});
+
+const schemaForm = Yup.object().shape({
+    //   email: Yup.string()
+    //     .email('Correo electronico invalido')
+    //     .required('Correo electronico requerido'),
+    // password: Yup.string()
+    //     .min(6, 'Contraseña muy corta')
+    //     .required('Contraseña requerida'),
+    // repeatPassword: Yup.string()
+    //     .oneOf([Yup.ref('password'), null], 'Las contraseñas no coinciden')
+    //     .required('Repetir contraseña requerida'),
+    email: Yup.string()
+        .email(true)
+        .required(true),
+    password: Yup.string()
+        // .min(6, 'Contraseña muy corta')
+        .required(true),
+    repeatPassword: Yup.string()
+        .oneOf([Yup.ref('password')], true)
+        .required(true),
+});
+
+        const onRegister = async () => {
+            formError.value = {};
+
+           try {
+            await schemaForm.validate(formData, { abortEarly: false });
+            // onRegister();
+            console.log('Formulario valido')
+        }   catch (err) {
+            err.inner.forEach((error) => {
+                formError.value[error.path] = error.message;
+            });
         }
+            };
 
         return {
             formData,
             onRegister,
+            formError,
         }
     }
 };
@@ -67,13 +109,11 @@ h1 {
     text-align: center;
     margin-bottom: 30px;
 }
-form {
-    width: 100%;
-}
-form input.error {
+
+.error {
 	 border-color: red;
 	 background-color: #ffeded;
-}
+    }
 
 p{
     text-align: center;
