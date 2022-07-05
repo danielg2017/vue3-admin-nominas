@@ -5,123 +5,133 @@
   rel="stylesheet"
   href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"
 />
-    <div class="register" @submit.prevent="onRegister">
-        <h1>Crear Cuenta</h1>
-        <form class="ui form">
-            <div class="field">
-                <input type="text"
-                placeholder="Correo electronivo"
-                v-model="formData.email"
-                :class="{ 'error': formError.email }"
-                />
-            </div>
-            <div class="field">
-                <input type="text"
-                placeholder="Contraseña"
-                v-model="formData.password"
-                :class="{ 'error': formError.password }"
-                />
-            </div>
-            <div class="field">
-                <input type="password"
-                placeholder="Repetir contraseña"
-                v-model="formData.repeatPassword"
-                :class="{ 'error': formError.repeatPassword }"
-                />
-            </div>
-            <button type="submit" class="ui button positive fluid">Registrar</button>
-        </form>
-        <p @click="changeForm">Iniciar Sección</p>
+    <div class="register">
+    <h1>Crear cuenta</h1>
 
-    </div>
+    <form class="ui form" @submit.prevent="onRegister">
+      <div class="field">
+        <input
+          type="text"
+          placeholder="Correo electronico"
+          v-model="formData.email"
+          :class="{ error: formError.email }"
+        />
+      </div>
+      <div class="field">
+        <input
+          type="password"
+          placeholder="Contraseña"
+          v-model="formData.password"
+          :class="{ error: formError.password }"
+        />
+      </div>
+      <div class="field">
+        <input
+          type="password"
+          placeholder="Repetir contraseña"
+          v-model="formData.repeatPassword"
+          :class="{ error: formError.repeatPassword }"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="ui button positive fluid"
+        :class="{ loading }"
+      >
+        Registrar
+      </button>
+    </form>
+
+    <p @click="changeForm">Iniciar sesión</p>
+  </div>
 </template>
 
 <script>
-// import { async } from '@firebase/util';
-import { ref } from 'vue';
-import * as Yup from 'yup';
-
+import { ref } from "vue";
+import * as Yup from "yup";
+import { auth } from  "../../utils/firebase";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 
 export default {
-    name: 'Register',
-    props: {
-        changeForm: Function,
-    },
-    setup () {
-        let formData = {};
-        let formError = ref({});
+  name: "Register",
+  props: {
+    changeForm: Function,
+  },
+  setup() {
+    let formData = {};
+    let formError = ref({});
+    let loading = ref(false);
 
-const schemaForm = Yup.object().shape({
-    //   email: Yup.string()
-    //     .email('Correo electronico invalido')
-    //     .required('Correo electronico requerido'),
-    // password: Yup.string()
-    //     .min(6, 'Contraseña muy corta')
-    //     .required('Contraseña requerida'),
-    // repeatPassword: Yup.string()
-    //     .oneOf([Yup.ref('password'), null], 'Las contraseñas no coinciden')
-    //     .required('Repetir contraseña requerida'),
-    email: Yup.string()
-        .email(true)
-        .required(true),
-    password: Yup.string()
-        // .min(6, 'Contraseña muy corta')
-        .required(true),
-    repeatPassword: Yup.string()
-        .oneOf([Yup.ref('password')], true)
-        .required(true),
-});
+    const schemaForm = Yup.object().shape({
+      email: Yup.string().email(true).required(true),
+      password: Yup.string().required(true),
+      repeatPassword: Yup.string()
+        .required(true)
+        .oneOf([Yup.ref("password")], true),
+    });
 
-        const onRegister = async () => {
-            formError.value = {};
+    const onRegister = async () => {
+      loading.value = true;
+      formError.value = {};
 
-           try {
-            await schemaForm.validate(formData, { abortEarly: false });
-            // onRegister();
-            console.log('Formulario valido')
-        }   catch (err) {
-            err.inner.forEach((error) => {
-                formError.value[error.path] = error.message;
-            });
+      try {
+        await schemaForm.validate(formData, { abortEarly: false });
+
+         try {
+          const { email, password } = formData;
+          await createUserWithEmailAndPassword(auth, email, password)
+        } catch (error) {
+          console.log(error);
         }
-            };
+      } catch (err) {
+        err.inner.forEach((error) => {
+          formError.value[error.path] = error.message;
+        });
+      }
+      loading.value = false;
+    };
 
-        return {
-            formData,
-            onRegister,
-            formError,
-        }
-    }
+    return {
+      formData,
+      onRegister,
+      formError,
+      loading,
+    };
+  },
 };
 </script>
 
-<style scoped>
+<!-- <style lang="scss" scoped> -->
 
+<style lang="scss" scoped>
 .register {
-    background-color: #fff;
-    padding: 30px;
-    box-shadow: 0 0 38px -5px rgba(0, 0, 0, 0.45);
-    widows: 400px;
-    border-radius: 10px;
-}
+  background-color: #fff;
+  padding: 30px;
+  box-shadow: 0px 0px 38px -5px rgba(0, 0, 0, 0.45);
+  width: 400px;
+  border-radius: 10px;
 
-h1 {
+  h1 {
     text-align: center;
     margin-bottom: 30px;
-}
+  }
 
-.error {
-	 border-color: red;
-	 background-color: #ffeded;
+  form {
+    input.error {
+      border-color: #faa;
+      background-color: #ffeded;
     }
+  }
 
-p{
+  p {
     text-align: center;
     margin-top: 30px;
-}
 
-p:hover{
-    cursor: pointer;
-    opacity: 0.6;
+    &:hover {
+      cursor: pointer;
+      opacity: 0.6;
+    }
+  }
 }
 </style>
